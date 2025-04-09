@@ -8,5 +8,6 @@ dependencies = [
     "matplotlib>=3.10.1",
     "networkx>=3.4.2",
     "nxpydot>=0.1",
+    "pandas>=2.2.3",
     "pydantic>=2.11.2",
 ]
