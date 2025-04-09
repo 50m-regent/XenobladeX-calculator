@@ -79,6 +79,34 @@ class Site(BaseModel):
     connection: set[int]
 
 
+class Probe(BaseModel):
+    production: float = 0.5
+    profit: float = 0.5
+    storage: int = 0
+
+    boost: float = 1
+
+    duplicate: bool = False
+
+
+class ProbeType(Enum):
+    BASIC = Probe()
+
+    RESEARCH_1 = Probe(production=0.3, profit=2)
+    RESEARCH_2 = Probe(production=0.3, profit=2.5)
+    RESEARCH_3 = Probe(production=0.3, profit=3)
+    RESEARCH_4 = Probe(production=0.3, profit=3.5)
+    RESEARCH_5 = Probe(production=0.3, profit=4)
+    RESEARCH_6 = Probe(production=0.3, profit=4.5)
+
+    BOOST_1 = Probe(production=0.1, profit=0.1, boost=1.5)
+    BOOST_2 = Probe(production=0.1, profit=0.1, boost=2)
+
+    DUPLICATE = Probe(production=0, profit=0, duplicate=True)
+
+    STORAGE = Probe(production=0.1, profit=0.1, storage=3000)
+
+
 class FrontierNetwork:
     def __init__(self) -> None:
         self.sites: list[Site | None] = [None] * 517
