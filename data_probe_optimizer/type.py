@@ -78,6 +78,24 @@ class Site(BaseModel):
     precious_resources: set[PreciousResource]
     connection: set[int]
 
+    @property
+    def profit_value(self) -> int:
+        match self.profit:
+            case Level.S:
+                return 0
+            case Level.A:
+                return 750
+            case Level.B:
+                return 650
+            case Level.C:
+                return 550
+            case Level.D:
+                return 450
+            case Level.E:
+                return 300
+            case Level.F:
+                return 200
+
 
 class Probe(BaseModel):
     production: float = 0.5
@@ -85,8 +103,6 @@ class Probe(BaseModel):
     storage: int = 0
 
     boost: float = 1
-
-    duplicate: bool = False
 
 
 class ProbeType(Enum):
@@ -102,14 +118,14 @@ class ProbeType(Enum):
     BOOST_1 = Probe(production=0.1, profit=0.1, boost=1.5)
     BOOST_2 = Probe(production=0.1, profit=0.1, boost=2)
 
-    DUPLICATE = Probe(production=0, profit=0, duplicate=True)
+    DUPLICATE = Probe(production=0, profit=0)
 
     STORAGE = Probe(production=0.1, profit=0.1, storage=3000)
 
 
 class FrontierNetwork:
     def __init__(self) -> None:
-        self.sites: list[Site | None] = [None] * 517
+        self.sites: dict[int, Site] = {}
         for record in pandas.read_csv(DataProbePaths.SITES, sep="\t").to_dict(
             orient="records"
         ):
@@ -125,3 +141,9 @@ class FrontierNetwork:
                 },
                 connection={int(site) for site in record["Connections"].split(",")},
             )
+
+
+class Value(BaseModel):
+    profit: int
+    storage: int
+    resource: set[PreciousResource]

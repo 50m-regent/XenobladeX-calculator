@@ -8,14 +8,11 @@ def visualize_network() -> None:
     graph = networkx.Graph()
 
     network = FrontierNetwork()
-    for site1 in range(len(network.sites)):
-        if not network.sites[site1]:
-            continue
-
-        graph.add_node(site1)
-        for site2 in network.sites[site1].connection:
-            graph.add_node(site2)
-            graph.add_edge(site1, site2)
+    for site_num_1, site_1 in network.sites.items():
+        graph.add_node(site_num_1)
+        for site_num_2 in site_1.connection:
+            graph.add_node(site_num_2)
+            graph.add_edge(site_num_1, site_num_2)
 
     pyplot.figure(figsize=(18, 12))
     networkx.draw(graph, with_labels=True, pos=networkx.planar_layout(graph))
