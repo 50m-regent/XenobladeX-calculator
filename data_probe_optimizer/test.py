@@ -2,7 +2,7 @@ import unittest
 from unittest import TestCase
 
 from type import FrontierNetwork, ProbeType
-from calculate_value import ValueCalculator
+from data_probe_optimizer.evaluate import ValueCalculator
 
 
 class TestTypes(TestCase):

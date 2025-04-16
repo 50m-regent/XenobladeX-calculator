@@ -2,7 +2,7 @@ from copy import deepcopy
 
 from icecream import ic
 
-from .calculate_value import ValueCalculator
+from .evaluate import ValueCalculator
 from .type import FrontierNetwork, ProbeType, Value
 
 
