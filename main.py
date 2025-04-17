@@ -1,19 +1,15 @@
 from data_probe_optimizer.search import Optimizer
-from data_probe_optimizer.type import ProbeType
-from data_probe_optimizer.postprocess import sanitize_probes
+from data_probe_optimizer.type import Probes
 
 
 def main():
     inventory = {
-        ProbeType.STORAGE: 1,
-        ProbeType.DUPLICATE: 1,
-        # ProbeType.BOOST_1: 1,
+        Probes.STORAGE: 1,
+        Probes.DUPLICATE: 1,
     }
     optimizer = Optimizer(storage_weight=1)
 
-    best_probes, value = optimizer.search(probes={}, inventory=inventory)
-
-    best_probes = sanitize_probes(best_probes)
+    best_probes, value = optimizer.search(probes={}, inventory=inventory, log=True)
 
     print(best_probes)
     print(value)

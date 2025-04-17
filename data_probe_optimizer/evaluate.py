@@ -1,4 +1,4 @@
-from .type import FrontierNetwork, ProbeType, Value
+from .type import FrontierNetwork, Probe, Probes, ProbeType, Value
 
 
 class ValueCalculator:
@@ -8,13 +8,12 @@ class ValueCalculator:
     def __calculate_combo_size(
         self,
         site: int,
-        probes: dict[int, ProbeType],
         root: int | None = None,
     ) -> int:
         if not root:
             root = site
 
-        if probes[site] != probes[root]:
+        if hash(self.probes[site]) != hash(self.probes[root]):
             return 0
         else:
             combo_size = 1
@@ -22,12 +21,12 @@ class ValueCalculator:
         for neighbor in self.network.sites[site].connection:
             if neighbor == root:
                 continue
-            combo_size += self.__calculate_combo_size(neighbor, probes, root=site)
+            combo_size += self.__calculate_combo_size(neighbor, root=site)
 
         return combo_size
 
-    def __calculate_combo_bonus(self, site: int, probes: dict[int, ProbeType]) -> float:
-        match self.__calculate_combo_size(site, probes):
+    def __calculate_combo_bonus(self, site: int) -> float:
+        match self.__calculate_combo_size(site):
             case 1 | 2:
                 return 1
             case 3 | 4:
@@ -37,81 +36,73 @@ class ValueCalculator:
             case _:
                 return 1.8
 
-    def __calculate_boost(self, site: int, probes: dict[int, ProbeType]) -> float:
-        boost = probes[site].value.boost
-        if probes[site] == ProbeType.DUPLICATE:
+    def __calculate_boost(self, site: int) -> float:
+        boost = self.probes[site].boost
+        if self.probes[site].type == ProbeType.DUPLICATE:
             for neighbor in self.network.sites[site].connection:
-                boost *= probes[neighbor].value.boost
+                boost *= self.probes[neighbor].boost
 
-        if boost != 1:
-            return boost * self.__calculate_combo_bonus(site, probes)
+        if boost > 1:
+            return boost * self.__calculate_combo_bonus(site)
 
         return boost
 
-    def __calculate_profit(self, site: int, probes: dict[int, ProbeType]) -> int:
-        profit = probes[site].value.profit
+    def __calculate_profit(self, site: int) -> int:
+        profit = self.probes[site].profit
         profit_value = self.network.sites[site].profit_value
 
-        if probes[site] == ProbeType.DUPLICATE:
+        if self.probes[site].type == ProbeType.DUPLICATE:
             for neighbor in self.network.sites[site].connection:
-                if probes[neighbor] not in {
-                    ProbeType.RESEARCH_1,
-                    ProbeType.RESEARCH_2,
-                    ProbeType.RESEARCH_3,
-                    ProbeType.RESEARCH_4,
-                    ProbeType.RESEARCH_5,
-                    ProbeType.RESEARCH_6,
-                }:
+                if self.probes[neighbor].type != ProbeType.RESEARCH:
                     continue
 
-                profit += probes[neighbor].value.profit
+                profit += self.probes[neighbor].profit
 
-        if probes[site] in {
-            ProbeType.RESEARCH_1,
-            ProbeType.RESEARCH_2,
-            ProbeType.RESEARCH_3,
-            ProbeType.RESEARCH_4,
-            ProbeType.RESEARCH_5,
-            ProbeType.RESEARCH_6,
-            ProbeType.DUPLICATE,
-        }:
-            profit_value += 1000 * self.network.sites[site].secret_spots
+        if profit < 2:
+            return int(profit * profit_value)
 
-            for neighbor in self.network.sites[site].connection:
-                profit *= self.__calculate_boost(neighbor, probes)
+        profit_value += 1000 * self.network.sites[site].secret_spots
 
-            profit *= self.__calculate_combo_bonus(site, probes)
+        for neighbor in self.network.sites[site].connection:
+            profit *= self.__calculate_boost(neighbor)
+
+        profit *= self.__calculate_combo_bonus(site)
 
         return int(profit * profit_value)
 
-    def __calculate_storage(self, site: int, probes: dict[int, ProbeType]) -> int:
-        storage = probes[site].value.storage
-        if probes[site] == ProbeType.DUPLICATE:
+    def __calculate_storage(self, site: int) -> int:
+        storage = self.probes[site].storage
+        if self.probes[site].type == ProbeType.DUPLICATE:
             for neighbor in self.network.sites[site].connection:
-                if probes[neighbor] != ProbeType.STORAGE:
+                if self.probes[neighbor].type != ProbeType.STORAGE:
                     continue
 
-                storage += probes[neighbor].value.storage
+                storage += self.probes[neighbor].storage
 
-        if probes[site] in {ProbeType.STORAGE, ProbeType.DUPLICATE}:
-            storage *= self.__calculate_combo_bonus(site, probes)
+        if storage < 3000:
+            return int(storage)
 
-            for neighbor in self.network.sites[site].connection:
-                storage *= self.__calculate_boost(neighbor, probes)
+        storage *= self.__calculate_combo_bonus(site)
+
+        for neighbor in self.network.sites[site].connection:
+            storage *= self.__calculate_boost(neighbor)
 
         return int(storage)
 
-    def perform(self, probes: dict[int, ProbeType]) -> Value:
-        for site_num in self.network.sites.keys():
-            if site_num not in probes:
-                probes[site_num] = ProbeType.BASIC
+    def perform(self, probes: dict[int, Probe]) -> Value:
+        self.probes = {
+            site: probes[site] if site in probes else Probes.BASIC
+            for site in self.network.sites.keys()
+        }
 
-        value = Value(profit=450, storage=6000, resource=set())
+        profit = 450
+        storage = 6000
+        resources = []
         for site in self.network.sites.keys():
-            value.profit += self.__calculate_profit(site, probes)
-            value.storage += self.__calculate_storage(site, probes)
+            profit += self.__calculate_profit(site)
+            storage += self.__calculate_storage(site)
 
-            if probes[site] == ProbeType.BASIC:
-                value.resource.update(self.network.sites[site].precious_resources)
+            if self.probes[site].type == ProbeType.MINING:
+                resources.extend(self.network.sites[site].precious_resources)
 
-        return value
+        return Value(profit=profit, storage=storage, resource=set(resources))

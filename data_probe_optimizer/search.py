@@ -1,9 +1,9 @@
 from copy import deepcopy
 
-from icecream import ic
+from tqdm import tqdm
 
 from .evaluate import ValueCalculator
-from .type import FrontierNetwork, ProbeType, Value
+from .type import FrontierNetwork, Probe, Value
 
 
 class Optimizer:
@@ -31,35 +31,34 @@ class Optimizer:
 
     def search(
         self,
-        probes: dict[int, ProbeType],
-        inventory: dict[ProbeType, int],
-    ) -> tuple[dict[int, ProbeType], Value]:
+        probes: dict[int, Probe],
+        inventory: dict[Probe, int],
+        log: bool = False,
+    ) -> tuple[dict[int, Probe], Value]:
         best_score = 0
-        best_probes = probes
-        for site in self.network.sites.keys():
+        best_probes = deepcopy(probes)
+
+        sites = tqdm(self.network.sites.keys()) if log else self.network.sites.keys()
+        for site in sites:
             if site in probes:
                 continue
             for probe in inventory.keys():
                 if inventory[probe] == 0:
                     continue
 
-                copied_probes = deepcopy(probes)
-                copied_inventory = deepcopy(inventory)
+                probes[site] = probe
+                inventory[probe] -= 1
 
-                copied_probes[site] = probe
-                copied_inventory[probe] -= 1
-
-                searched_probes, value = self.search(copied_probes, copied_inventory)
+                searched_probes, value = self.search(probes, inventory)
                 score = self.calculate_score(value)
+
+                probes.pop(site)
+                inventory[probe] += 1
 
                 if best_score > score:
                     continue
 
                 best_score = score
-                best_probes = searched_probes
-
-        ic(probes)
-        ic(inventory)
-        print("------------------------")
+                best_probes = deepcopy(searched_probes)
 
         return best_probes, self.calculator.perform(best_probes)

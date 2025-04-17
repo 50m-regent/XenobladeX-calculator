@@ -97,6 +97,14 @@ class Site(BaseModel):
                 return 200
 
 
+class ProbeType(Enum):
+    MINING = 0
+    RESEARCH = 1
+    BOOST = 2
+    STORAGE = 3
+    DUPLICATE = 4
+
+
 class Probe(BaseModel):
     production: float = 0.5
     profit: float = 0.5
@@ -104,23 +112,33 @@ class Probe(BaseModel):
 
     boost: float = 1
 
+    type: ProbeType
 
-class ProbeType(Enum):
-    BASIC = Probe()
+    def __hash__(self) -> int:
+        return int(
+            self.production * 10
+            + self.profit * 10 * 100
+            + self.storage * 100000
+            + self.boost * 10000
+        )
 
-    RESEARCH_1 = Probe(production=0.3, profit=2)
-    RESEARCH_2 = Probe(production=0.3, profit=2.5)
-    RESEARCH_3 = Probe(production=0.3, profit=3)
-    RESEARCH_4 = Probe(production=0.3, profit=3.5)
-    RESEARCH_5 = Probe(production=0.3, profit=4)
-    RESEARCH_6 = Probe(production=0.3, profit=4.5)
 
-    BOOST_1 = Probe(production=0.1, profit=0.1, boost=1.5)
-    BOOST_2 = Probe(production=0.1, profit=0.1, boost=2)
+class Probes:
+    BASIC = Probe(type=ProbeType.MINING)
 
-    DUPLICATE = Probe(production=0, profit=0)
+    RESEARCH_1 = Probe(production=0.3, profit=2, type=ProbeType.RESEARCH)
+    RESEARCH_2 = Probe(production=0.3, profit=2.5, type=ProbeType.RESEARCH)
+    RESEARCH_3 = Probe(production=0.3, profit=3, type=ProbeType.RESEARCH)
+    RESEARCH_4 = Probe(production=0.3, profit=3.5, type=ProbeType.RESEARCH)
+    RESEARCH_5 = Probe(production=0.3, profit=4, type=ProbeType.RESEARCH)
+    RESEARCH_6 = Probe(production=0.3, profit=4.5, type=ProbeType.RESEARCH)
 
-    STORAGE = Probe(production=0.1, profit=0.1, storage=3000)
+    BOOST_1 = Probe(production=0.1, profit=0.1, boost=1.5, type=ProbeType.BOOST)
+    BOOST_2 = Probe(production=0.1, profit=0.1, boost=2, type=ProbeType.BOOST)
+
+    DUPLICATE = Probe(production=0, profit=0, type=ProbeType.DUPLICATE)
+
+    STORAGE = Probe(production=0.1, profit=0.1, storage=3000, type=ProbeType.STORAGE)
 
 
 class FrontierNetwork:
