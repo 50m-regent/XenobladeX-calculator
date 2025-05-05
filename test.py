@@ -1,8 +1,10 @@
 import unittest
 from unittest import TestCase
 
+from icecream import ic
+
 from data_probe_optimizer.type import FrontierNetwork, Probes
-from data_probe_optimizer.evaluate import ValueCalculator
+from data_probe_optimizer.evaluate import ProbeTree, ValueCalculator
 
 
 class TestTypes(TestCase):
@@ -117,6 +119,23 @@ class TestValues(TestCase):
         probes[507] = Probes.STORAGE
         value = calculator.perform(probes)
         assert value.storage == 40980
+
+
+class TestTree(TestCase):
+    def test_center(self) -> None:
+        probes = {
+            504: Probes.RESEARCH_1,
+            508: Probes.RESEARCH_2,
+            509: Probes.RESEARCH_3,
+            507: Probes.RESEARCH_4,
+            511: Probes.RESEARCH_5,
+            505: Probes.RESEARCH_6,
+            510: Probes.DUPLICATE,
+            513: Probes.STORAGE,
+        }
+        tree = ProbeTree(probes)
+
+        assert tree.root.probe.name == "research_2"
 
 
 if __name__ == "__main__":

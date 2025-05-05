@@ -8,7 +8,7 @@ def main():
     optimizer = Optimizer(storage_weight=1)
 
     best_probes_list = optimizer.get_optimize_probes(
-        inventory=inventory  # , max_candidates=1024
+        inventory=inventory, max_candidates=1024
     )
 
     calculator = ValueCalculator()

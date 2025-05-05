@@ -1,7 +1,62 @@
+from __future__ import annotations
+
+from pydantic import BaseModel
+
 from .type import FrontierNetwork, Probe, ProbeType, Value, PreciousResource
 from .constants import BASIC_PROFITS
 
 network = FrontierNetwork()
+
+
+class Node(BaseModel):
+    children: list[Node] = []
+    probe: Probe
+
+
+class ProbeTree:
+    def __init__(self, probes: dict[int, Probe]) -> None:
+        for site in probes:
+            if probes[site].type == ProbeType.BASIC:
+                probes.pop(site)
+
+        start = next(iter(probes))
+        path = ProbeTree.__get_longest_path(start, probes)
+        path = ProbeTree.__get_longest_path(path[-1], probes)
+
+        center = path[len(path) // 2]
+
+        self.root = self.__create_tree(center, probes)
+
+    @staticmethod
+    def __get_longest_path(
+        now: int, probes: dict[int, Probe], root: int = 0
+    ) -> list[int]:
+        path = [now]
+        longest = []
+        for neighbor in network.sites[now].connection:
+            if neighbor == root:
+                continue
+            if neighbor not in probes:
+                continue
+
+            candidate = ProbeTree.__get_longest_path(neighbor, probes, now)
+            if len(candidate) > len(longest):
+                longest = candidate
+
+        return path + longest
+
+    @staticmethod
+    def __create_tree(now: int, probes: dict[int, Probe], parent: int = 0) -> Node:
+        node = Node(probe=probes[now])
+
+        for neighbor in network.sites[now].connection:
+            if neighbor == parent:
+                continue
+            if neighbor not in probes:
+                continue
+            node.children.append(ProbeTree.__create_tree(neighbor, probes, now))
+
+        return node
 
 
 class ValueCalculator:
