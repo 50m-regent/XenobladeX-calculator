@@ -1,18 +1,22 @@
 from data_probe_optimizer.search import Optimizer
-from data_probe_optimizer.type import Probes
+from data_probe_optimizer.evaluate import ValueCalculator
+from data_probe_optimizer.type import Inventory
 
 
 def main():
-    inventory = {
-        Probes.STORAGE: 1,
-        Probes.DUPLICATE: 1,
-    }
+    inventory = Inventory(storage=11, duplicate=3, boost_2=3, boost_1=0)
     optimizer = Optimizer(storage_weight=1)
 
-    best_probes, value = optimizer.search(probes={}, inventory=inventory, log=True)
+    best_probes_list = optimizer.get_optimize_probes(
+        inventory=inventory  # , max_candidates=1024
+    )
 
-    print(best_probes)
-    print(value)
+    calculator = ValueCalculator()
+
+    for best_probes in best_probes_list:
+        for site, probe in best_probes.items():
+            print(site, probe.name)
+        print(calculator.perform(best_probes))
 
 
 if __name__ == "__main__":

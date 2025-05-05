@@ -18,10 +18,9 @@ class TestValues(TestCase):
         super().__init__(*args, **kwargs)
 
         self.network = FrontierNetwork()
-        self.calculator = ValueCalculator(self.network)
 
     def test_base(self) -> None:
-        values = self.calculator.perform({})
+        values = ValueCalculator().perform({})
 
         assert values.profit == 27675
         assert values.storage == 6000
@@ -38,87 +37,85 @@ class TestValues(TestCase):
             513: Probes.DUPLICATE,
         }
 
-        for site_num in self.network.sites.keys():
-            if site_num not in probes:
-                probes[site_num] = Probes.BASIC
+        calculator = ValueCalculator()
 
-        self.calculator.probes = probes
-
-        assert self.calculator._ValueCalculator__calculate_combo_size(504) == 8  # type: ignore
+        assert calculator._ValueCalculator__calculate_combo_size(504, probes) == 8  # type: ignore
         assert (
-            self.calculator._ValueCalculator__calculate_combo_bonus(504) == 1.8  # type: ignore
+            calculator._ValueCalculator__calculate_combo_bonus(504, probes) == 1.8  # type: ignore
         )
 
-        self.calculator.probes[513] = Probes.BASIC
-        assert self.calculator._ValueCalculator__calculate_combo_size(504) == 7  # type: ignore
+        probes[513] = Probes.BASIC
+        assert calculator._ValueCalculator__calculate_combo_size(504, probes) == 7  # type: ignore
         assert (
-            self.calculator._ValueCalculator__calculate_combo_bonus(504) == 1.5  # type: ignore
+            calculator._ValueCalculator__calculate_combo_bonus(504, probes) == 1.5  # type: ignore
         )
 
-        self.calculator.probes[510] = Probes.BASIC
-        assert self.calculator._ValueCalculator__calculate_combo_size(504) == 6  # type: ignore
+        probes[510] = Probes.BASIC
+        assert calculator._ValueCalculator__calculate_combo_size(504, probes) == 6  # type: ignore
         assert (
-            self.calculator._ValueCalculator__calculate_combo_bonus(504) == 1.5  # type: ignore
+            calculator._ValueCalculator__calculate_combo_bonus(504, probes) == 1.5  # type: ignore
         )
 
-        self.calculator.probes[505] = Probes.BASIC
-        assert self.calculator._ValueCalculator__calculate_combo_size(504) == 5  # type: ignore
+        probes[505] = Probes.BASIC
+        assert calculator._ValueCalculator__calculate_combo_size(504, probes) == 5  # type: ignore
         assert (
-            self.calculator._ValueCalculator__calculate_combo_bonus(504) == 1.5  # type: ignore
+            calculator._ValueCalculator__calculate_combo_bonus(504, probes) == 1.5  # type: ignore
         )
 
-        self.calculator.probes[511] = Probes.BASIC
-        assert self.calculator._ValueCalculator__calculate_combo_size(504) == 4  # type: ignore
+        probes[511] = Probes.BASIC
+        assert calculator._ValueCalculator__calculate_combo_size(504, probes) == 4  # type: ignore
         assert (
-            self.calculator._ValueCalculator__calculate_combo_bonus(504) == 1.3  # type: ignore
+            calculator._ValueCalculator__calculate_combo_bonus(504, probes) == 1.3  # type: ignore
         )
 
-        self.calculator.probes[507] = Probes.BASIC
-        assert self.calculator._ValueCalculator__calculate_combo_size(504) == 3  # type: ignore
+        probes[507] = Probes.BASIC
+        assert calculator._ValueCalculator__calculate_combo_size(504, probes) == 3  # type: ignore
         assert (
-            self.calculator._ValueCalculator__calculate_combo_bonus(504) == 1.3  # type: ignore
+            calculator._ValueCalculator__calculate_combo_bonus(504, probes) == 1.3  # type: ignore
         )
 
-        self.calculator.probes[509] = Probes.BASIC
-        assert self.calculator._ValueCalculator__calculate_combo_size(504) == 2  # type: ignore
-        assert self.calculator._ValueCalculator__calculate_combo_bonus(504) == 1  # type: ignore
+        probes[509] = Probes.BASIC
+        assert calculator._ValueCalculator__calculate_combo_size(504, probes) == 2  # type: ignore
+        assert calculator._ValueCalculator__calculate_combo_bonus(504, probes) == 1  # type: ignore
 
-        self.calculator.probes[508] = Probes.BASIC
-        assert self.calculator._ValueCalculator__calculate_combo_size(504) == 1  # type: ignore
-        assert self.calculator._ValueCalculator__calculate_combo_bonus(504) == 1  # type: ignore
+        probes[508] = Probes.BASIC
+        assert calculator._ValueCalculator__calculate_combo_size(504, probes) == 1  # type: ignore
+        assert calculator._ValueCalculator__calculate_combo_bonus(504, probes) == 1  # type: ignore
 
-        self.calculator.probes[101] = Probes.DUPLICATE
-        assert self.calculator._ValueCalculator__calculate_combo_size(504) == 1  # type: ignore
-        assert self.calculator._ValueCalculator__calculate_combo_bonus(504) == 1  # type: ignore
+        probes[101] = Probes.DUPLICATE
+        assert calculator._ValueCalculator__calculate_combo_size(504, probes) == 1  # type: ignore
+        assert calculator._ValueCalculator__calculate_combo_bonus(504, probes) == 1  # type: ignore
 
     def test_boost(self) -> None:
         probes = {
             504: Probes.STORAGE,
         }
 
-        value = self.calculator.perform(probes)
+        calculator = ValueCalculator()
+
+        value = calculator.perform(probes)
         assert value.storage == 9000
 
         probes[508] = Probes.DUPLICATE
-        value = self.calculator.perform(probes)
+        value = calculator.perform(probes)
         assert value.storage == 12000
 
         probes[511] = Probes.DUPLICATE
         probes[509] = Probes.DUPLICATE
-        value = self.calculator.perform(probes)
+        value = calculator.perform(probes)
         assert value.storage == 12900
 
         probes[512] = Probes.BOOST_2
-        value = self.calculator.perform(probes)
+        value = calculator.perform(probes)
         assert value.storage == 19140
 
         probes[503] = Probes.STORAGE
         probes[502] = Probes.STORAGE
-        value = self.calculator.perform(probes)
+        value = calculator.perform(probes)
         assert value.storage == 27840
 
         probes[507] = Probes.STORAGE
-        value = self.calculator.perform(probes)
+        value = calculator.perform(probes)
         assert value.storage == 40980
 
 

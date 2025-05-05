@@ -1,0 +1,37 @@
+Site	M	G	B	Sightseeing Spots	Rare Resources	Connections
+401	C	B	B	0	Parhelion Platinum, Marine Rutile	402,404
+402	A	B	B	0	 	401,408
+403	A	C	S	0	 	405
+404	B	A	S	1	 	401,407
+405	A	E	A	0	Arc Sand Ore	403,408,409
+406	C	B	B	0	 	408
+407	A	B	B	0	 	404,412
+408	B	D	B	1	Aurorite, Arc Sand Ore, Everfreeze Ore	402,405,406,413
+409	B	A	B	0	 	405,411
+410	C	A	B	1	 	412
+411	A	A	S	0	 	409,414
+412	A	B	A	0	 	407,410,415
+413	C	A	B	1	 	408,416
+414	C	B	B	2	Parhelion Platinum, Marine Rutile	411
+415	C	A	B	0	 	412,502
+416	C	B	B	0	 	413,418,419
+417	B	D	B	0	Everfreeze Ore, Boiled-Egg Ore	419
+418	C	C	B	0	Parhelion Platinum, Arc Sand Ore, Everfreeze Ore, Boiled-Egg Ore, Marine Rutile	416
+419	C	A	S	1	 	416,417,420
+420	B	C	B	0	Everfreeze Ore	419
+501	B	F	B	0	Arc Sand Ore	502
+502	A	C	B	1	Bonjelium	415,501,503
+503	C	D	B	1	Enduron Lead	502,504
+504	C	C	B	0	Arc Sand Ore, Enduron Lead, Marine Rutile, Bonjelium	503,508
+505	C	B	B	2	 	506,509
+506	C	B	B	1	Bonjelium, Arc Sand Ore	505
+507	C	A	B	1	Bonjelium	508
+508	A	B	S	1	Enduron Lead, Marine Rutile	504,507,509,511
+509	A	A	A	0	 	505,508,510,513
+510	C	B	B	0	Bonjelium	509
+511	A	C	A	0	Bonjelium	508,512,514
+512	C	A	S	0	 	511
+513	C	A	B	2	 	509,516
+514	C	A	B	1	 	511,515
+515	C	B	S	0	 	514
+516	B	E	B	0	 	513

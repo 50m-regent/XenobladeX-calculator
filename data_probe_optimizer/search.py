@@ -1,9 +1,13 @@
-from copy import deepcopy
+import pickle
+import random
+import shutil
 
 from tqdm import tqdm
 
 from .evaluate import ValueCalculator
-from .type import FrontierNetwork, Probe, Value
+from .type import FrontierNetwork, Library, Value, Inventory, Probe, Probes
+
+terminal_size = shutil.get_terminal_size()
 
 
 class Optimizer:
@@ -13,7 +17,6 @@ class Optimizer:
         profit_weight: float | None = None,
     ) -> None:
         self.network = FrontierNetwork()
-        self.calculator = ValueCalculator(self.network)
 
         if not storage_weight and not profit_weight:
             raise ValueError("Either storage weight or profit weight must be set.")
@@ -26,39 +29,77 @@ class Optimizer:
             self.storage_weight = storage_weight
             self.profit_weight = 1 - storage_weight
 
-    def calculate_score(self, value: Value) -> float:
+        self.library = Library()
+        self.library[Inventory()] = [{}]
+
+        self.calculator = ValueCalculator()
+
+    def __calculate_score(self, value: Value) -> float:
         return self.storage_weight * value.storage + self.profit_weight * value.profit
 
-    def search(
+    def get_optimize_probes(
         self,
-        probes: dict[int, Probe],
-        inventory: dict[Probe, int],
-        log: bool = False,
-    ) -> tuple[dict[int, Probe], Value]:
+        inventory: Inventory,
+        depth: int = 0,
+        max_candidates: int | None = None,
+    ) -> list[dict[int, Probe]]:
+        if inventory in self.library:
+            return self.library[inventory]
+
+        self.library[inventory] = []
+
         best_score = 0
-        best_probes = deepcopy(probes)
-
-        sites = tqdm(self.network.sites.keys()) if log else self.network.sites.keys()
-        for site in sites:
-            if site in probes:
+        for attr in tqdm(
+            inventory,
+            desc="\t" * depth + f"Calculating: {inventory}",
+            ncols=terminal_size[0] - depth * 3,
+            leave=False,
+            total=len(inventory.model_dump()),
+        ):
+            if attr[-1] == 0:
                 continue
-            for probe in inventory.keys():
-                if inventory[probe] == 0:
-                    continue
 
-                probes[site] = probe
-                inventory[probe] -= 1
+            inventory.__setattr__(attr[0], attr[-1] - 1)
 
-                searched_probes, value = self.search(probes, inventory)
-                score = self.calculate_score(value)
+            description = "\t" * depth + f"Calculating {inventory} + {attr[0]}"
+            best_probes_list = self.get_optimize_probes(
+                inventory, depth=depth + 1, max_candidates=max_candidates
+            )
 
-                probes.pop(site)
-                inventory[probe] += 1
+            inventory.__setattr__(attr[0], attr[-1])
 
-                if best_score > score:
-                    continue
+            for probes in tqdm(
+                best_probes_list,
+                desc=description,
+                ncols=terminal_size[0] - depth * 3,
+                leave=False,
+            ):
+                for site in self.network.sites:
+                    if site in probes:
+                        continue
+                    if len(probes) and all(
+                        [
+                            neighbor not in probes
+                            for neighbor in self.network.sites[site].connection
+                        ]
+                    ):
+                        continue
 
-                best_score = score
-                best_probes = deepcopy(searched_probes)
+                    probes[site] = Probes.from_name(attr[0])
+                    score = self.__calculate_score(self.calculator.perform(probes))
 
-        return best_probes, self.calculator.perform(best_probes)
+                    if score > best_score:
+                        self.library[inventory] = [pickle.loads(pickle.dumps(probes))]
+                        best_score = score
+                    elif score == best_score:
+                        self.library[inventory].append(
+                            pickle.loads(pickle.dumps(probes))
+                        )
+
+                    probes.pop(site)
+
+        if max_candidates:
+            random.shuffle(self.library[inventory])
+            self.library[inventory] = self.library[inventory][:max_candidates]
+
+        return self.library[inventory]

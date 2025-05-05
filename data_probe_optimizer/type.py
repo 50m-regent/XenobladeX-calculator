@@ -6,7 +6,8 @@ from pydantic import BaseModel
 
 
 class DataProbePaths:
-    SITES = Path(__file__).parent / "sites.tsv"
+    # SITES = Path(__file__).parent / "sites.tsv"
+    SITES = Path(__file__).parent / "sites_small.tsv"
 
 
 class Level(Enum):
@@ -98,14 +99,17 @@ class Site(BaseModel):
 
 
 class ProbeType(Enum):
-    MINING = 0
-    RESEARCH = 1
-    BOOST = 2
-    STORAGE = 3
-    DUPLICATE = 4
+    BASIC = 0
+    MINING = 1
+    RESEARCH = 2
+    BOOST = 3
+    STORAGE = 4
+    DUPLICATE = 5
 
 
 class Probe(BaseModel):
+    name: str
+
     production: float = 0.5
     profit: float = 0.5
     storage: int = 0
@@ -114,31 +118,105 @@ class Probe(BaseModel):
 
     type: ProbeType
 
-    def __hash__(self) -> int:
-        return int(
-            self.production * 10
-            + self.profit * 10 * 100
-            + self.storage * 100000
-            + self.boost * 10000
-        )
-
 
 class Probes:
-    BASIC = Probe(type=ProbeType.MINING)
+    BASIC = Probe(name="basic", type=ProbeType.BASIC)
 
-    RESEARCH_1 = Probe(production=0.3, profit=2, type=ProbeType.RESEARCH)
-    RESEARCH_2 = Probe(production=0.3, profit=2.5, type=ProbeType.RESEARCH)
-    RESEARCH_3 = Probe(production=0.3, profit=3, type=ProbeType.RESEARCH)
-    RESEARCH_4 = Probe(production=0.3, profit=3.5, type=ProbeType.RESEARCH)
-    RESEARCH_5 = Probe(production=0.3, profit=4, type=ProbeType.RESEARCH)
-    RESEARCH_6 = Probe(production=0.3, profit=4.5, type=ProbeType.RESEARCH)
+    RESEARCH_1 = Probe(
+        name="research_1", production=0.3, profit=2, type=ProbeType.RESEARCH
+    )
+    RESEARCH_2 = Probe(
+        name="research_2", production=0.3, profit=2.5, type=ProbeType.RESEARCH
+    )
+    RESEARCH_3 = Probe(
+        name="research_3", production=0.3, profit=3, type=ProbeType.RESEARCH
+    )
+    RESEARCH_4 = Probe(
+        name="research_4", production=0.3, profit=3.5, type=ProbeType.RESEARCH
+    )
+    RESEARCH_5 = Probe(
+        name="research_5", production=0.3, profit=4, type=ProbeType.RESEARCH
+    )
+    RESEARCH_6 = Probe(
+        name="research_6", production=0.3, profit=4.5, type=ProbeType.RESEARCH
+    )
 
-    BOOST_1 = Probe(production=0.1, profit=0.1, boost=1.5, type=ProbeType.BOOST)
-    BOOST_2 = Probe(production=0.1, profit=0.1, boost=2, type=ProbeType.BOOST)
+    BOOST_1 = Probe(
+        name="boost_1", production=0.1, profit=0.1, boost=1.5, type=ProbeType.BOOST
+    )
+    BOOST_2 = Probe(
+        name="boost_2", production=0.1, profit=0.1, boost=2, type=ProbeType.BOOST
+    )
 
-    DUPLICATE = Probe(production=0, profit=0, type=ProbeType.DUPLICATE)
+    DUPLICATE = Probe(
+        name="duplicate", production=0, profit=0, type=ProbeType.DUPLICATE
+    )
 
-    STORAGE = Probe(production=0.1, profit=0.1, storage=3000, type=ProbeType.STORAGE)
+    STORAGE = Probe(
+        name="storage", production=0.1, profit=0.1, storage=3000, type=ProbeType.STORAGE
+    )
+
+    @staticmethod
+    def from_name(name: str) -> Probe:
+        match name:
+            case "research_1":
+                return Probes.RESEARCH_1
+            case "research_2":
+                return Probes.RESEARCH_2
+            case "research_3":
+                return Probes.RESEARCH_3
+            case "research_4":
+                return Probes.RESEARCH_4
+            case "research_5":
+                return Probes.RESEARCH_5
+            case "research_6":
+                return Probes.RESEARCH_6
+            case "boost_1":
+                return Probes.BOOST_1
+            case "boost_2":
+                return Probes.BOOST_2
+            case "duplicate":
+                return Probes.DUPLICATE
+            case "storage":
+                return Probes.STORAGE
+            case _:
+                raise NameError(f"Wrong probe name: {name}")
+
+
+class Inventory(BaseModel):
+    research_1: int = 0
+    research_2: int = 0
+    research_3: int = 0
+    research_4: int = 0
+    research_5: int = 0
+    research_6: int = 0
+
+    boost_1: int = 0
+    boost_2: int = 0
+
+    duplicate: int = 0
+
+    storage: int = 0
+
+    def __repr__(self) -> str:
+        output = ""
+        for attr in self:
+            if attr[-1]:
+                output += f"{attr[0]}: {attr[-1]}, "
+
+        if not len(output):
+            return "empty"
+        return "(" + output.removesuffix(", ") + ")"
+
+    def __str__(self) -> str:
+        output = ""
+        for attr in self:
+            if attr[-1]:
+                output += f"{attr[0]}: {attr[-1]}, "
+
+        if not len(output):
+            return "empty"
+        return output.removesuffix(", ")
 
 
 class FrontierNetwork:
@@ -165,3 +243,118 @@ class Value(BaseModel):
     profit: int
     storage: int
     resource: set[PreciousResource]
+
+
+class Library:
+    def __init__(self) -> None:
+        self.library: dict[
+            int,
+            dict[
+                int,
+                dict[
+                    int,
+                    dict[
+                        int,
+                        dict[
+                            int,
+                            dict[
+                                int,
+                                dict[
+                                    int,
+                                    dict[
+                                        int,
+                                        dict[int, dict[int, list[dict[int, Probe]]]],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ] = {}
+
+    def __contains__(self, inventory: Inventory) -> bool:
+        library = self.library
+        if inventory.research_1 not in library:
+            return False
+
+        library = library[inventory.research_1]
+        if inventory.research_2 not in library:
+            return False
+
+        library = library[inventory.research_2]
+        if inventory.research_3 not in library:
+            return False
+
+        library = library[inventory.research_3]
+        if inventory.research_4 not in library:
+            return False
+
+        library = library[inventory.research_4]
+        if inventory.research_5 not in library:
+            return False
+
+        library = library[inventory.research_5]
+        if inventory.research_6 not in library:
+            return False
+
+        library = library[inventory.research_6]
+        if inventory.boost_1 not in library:
+            return False
+
+        library = library[inventory.boost_1]
+        if inventory.boost_2 not in library:
+            return False
+
+        library = library[inventory.boost_2]
+        if inventory.duplicate not in library:
+            return False
+
+        library = library[inventory.duplicate]
+        return inventory.storage in library
+
+    def __getitem__(self, key: Inventory) -> list[dict[int, Probe]]:
+        return self.library[key.research_1][key.research_2][key.research_3][
+            key.research_4
+        ][key.research_5][key.research_6][key.boost_1][key.boost_2][key.duplicate][
+            key.storage
+        ]
+
+    def __setitem__(self, key: Inventory, value: list[dict[int, Probe]]) -> None:
+        library = self.library
+        if key.research_1 not in library:
+            library[key.research_1] = {}
+
+        library = library[key.research_1]
+        if key.research_2 not in library:
+            library[key.research_2] = {}
+
+        library = library[key.research_2]
+        if key.research_3 not in library:
+            library[key.research_3] = {}
+
+        library = library[key.research_3]
+        if key.research_4 not in library:
+            library[key.research_4] = {}
+
+        library = library[key.research_4]
+        if key.research_5 not in library:
+            library[key.research_5] = {}
+
+        library = library[key.research_5]
+        if key.research_6 not in library:
+            library[key.research_6] = {}
+
+        library = library[key.research_6]
+        if key.boost_1 not in library:
+            library[key.boost_1] = {}
+
+        library = library[key.boost_1]
+        if key.boost_2 not in library:
+            library[key.boost_2] = {}
+
+        library = library[key.boost_2]
+        if key.duplicate not in library:
+            library[key.duplicate] = {}
+
+        library[key.duplicate][key.storage] = value
